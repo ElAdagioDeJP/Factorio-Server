@@ -11,8 +11,8 @@ con Dokploy (Docker Compose) en Hetzner CX33. Puerto de juego UDP directo al hos
 | `docker-compose.yml` | Servicio para Dokploy (tipo Compose) | Cada deploy |
 | `config/server-settings.json` | Nombre, password, autosaves, verificación | Cada reinicio |
 | `config/server-adminlist.json` | Admins (usuario de Factorio) | Cada reinicio |
-| `config/map-exchange-string.txt` | **El mundo** (exchange string exportado del juego, v2.0.73) | Solo al generar el save (paso 3) |
-| `config/map-gen-settings.json` | Recursos, biters, terreno (fallback) | Solo si se genera sin exchange string |
+| `config/map-exchange-string.txt` | Exchange string (alternativa manual, ver "Cambiar el mundo") | Solo si se genera el save a mano |
+| `config/map-gen-settings.json` | Recursos, biters, terreno | Solo al generar el save (primer arranque) |
 | `config/map-settings.json` | Evolución, expansión, pollution | Cada reinicio (mayoría de campos) |
 
 Datos persistentes en el VPS: `/opt/factorio/` (saves, mods, logs). Nunca los toca un redeploy.
@@ -28,29 +28,14 @@ Datos persistentes en el VPS: `/opt/factorio/` (saves, mods, logs). Nunca los to
    ```bash
    sudo ufw allow 34197/udp   # y/o regla inbound UDP 34197 en Hetzner Cloud Firewall
    ```
-3. **Generar el mundo desde el exchange string** (one-off, antes del primer deploy).
-   Primero activar los mods de Space Age para la generación, luego crear el save:
-   ```bash
-   sudo mkdir -p /opt/factorio/mods /opt/factorio/saves
-   sudo tee /opt/factorio/mods/mod-list.json >/dev/null <<'EOF'
-   {"mods":[{"name":"base","enabled":true},{"name":"elevated-rails","enabled":true},{"name":"quality","enabled":true},{"name":"space-age","enabled":true}]}
-   EOF
-   sudo chown -R 845:845 /opt/factorio
-
-   MES=$(curl -fsSL https://raw.githubusercontent.com/ElAdagioDeJP/Factorio-Server/main/config/map-exchange-string.txt)
-   docker run --rm -u 845:845 -v /opt/factorio:/factorio \
-     --entrypoint /opt/factorio/bin/x64/factorio \
-     factoriotools/factorio:2.0.77 \
-     --create /factorio/saves/mundo-amigos.zip \
-     --map-exchange-string "$MES"
-   ```
-   Debe terminar con el save creado en `/opt/factorio/saves/mundo-amigos.zip`.
-4. En Dokploy: nuevo servicio → **Compose** → source: este repo de GitHub, archivo
+3. En Dokploy: nuevo servicio → **Compose** → source: este repo de GitHub, archivo
    `docker-compose.yml`. **No** configurar dominio/Traefik para este servicio.
-5. Deploy. En los logs debe aparecer la carga de `mundo-amigos` con los mods
-   `space-age`, `quality`, `elevated-rails` y luego `Hosting game at ...:34197`.
-   (El compose usa `GENERATE_NEW_SAVE=false`: si olvidaste el paso 3, el contenedor
-   falla con "no saves found" en vez de generar un mapa equivocado.)
+4. Deploy. En el primer arranque el contenedor genera `churros.zip` desde
+   `config/map-gen-settings.json` y `config/map-settings.json`
+   (`GENERATE_NEW_SAVE=true` + `SAVE_NAME=churros`); en los siguientes NO lo
+   regenera (ya existe) y `LOAD_LATEST_SAVE=true` carga el save más reciente —
+   redeploys idempotentes, sin pérdida de mundo. En los logs deben aparecer los
+   mods `space-age`, `quality`, `elevated-rails` y luego `Hosting game at ...:34197`.
 
 ## Conectarse
 
@@ -65,11 +50,19 @@ del juego (ver `game_password` en `config/server-settings.json`).
 
 ## Cambiar el mundo
 
-- **Nuevo exchange string**: reemplazar `config/map-exchange-string.txt`, commit,
-  y en el VPS: parar el servicio en Dokploy, vaciar `/opt/factorio/saves/`
-  (**se pierde el progreso**), repetir el paso 3 y redeploy.
-- **Save ya creado** (alternativa): subir el `.zip` a `/opt/factorio/saves/` con
-  `chown 845:845` — el server carga siempre el save más reciente.
+- **Regenerar con otra config**: editar `config/map-gen-settings.json`, commit,
+  parar el servicio en Dokploy, borrar `/opt/factorio/saves/churros.zip`
+  (**se pierde el progreso**) y redeploy — se genera de nuevo.
+- **Desde exchange string** (manual): parar el servicio, borrar el save y crear uno nuevo:
+  ```bash
+  MES=$(cat config/map-exchange-string.txt)
+  docker run --rm -u 845:845 -v /opt/factorio:/factorio \
+    --entrypoint /opt/factorio/bin/x64/factorio \
+    factoriotools/factorio:2.0.77 \
+    --create /factorio/saves/churros.zip \
+    --map-exchange-string "$MES"
+  ```
+- **Save ya creado**: subirlo como `/opt/factorio/saves/churros.zip` con `chown 845:845`.
 
 ## Administración
 

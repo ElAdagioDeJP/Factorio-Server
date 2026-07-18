@@ -44,6 +44,11 @@
     "max_expansion_cooldown": 216000
   },
 
+  "asteroids": {
+    "spawning_rate": 1,
+    "max_ray_portals_expanded_per_tick": 100
+  },
+
   "unit_group": {
     "min_group_gathering_time": 3600,
     "max_group_gathering_time": 36000,

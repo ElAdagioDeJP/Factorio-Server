@@ -15,13 +15,13 @@ services:
       # Si algún cliente no tiene los mods del DLC y no puede entrar,
       # cambiar a "false" y regenerar el save (borrar saves/ o cambiar SAVE_NAME).
       - DLC_SPACE_AGE=true
-      # El mundo se genera UNA vez desde config/map-exchange-string.txt
-      # (paso one-off en el README) — por eso GENERATE_NEW_SAVE=false:
-      # si falta el save, el contenedor falla en vez de generar un mapa
-      # equivocado en silencio.
+      # Idempotente: GENERATE_NEW_SAVE solo crea saves/churros.zip si NO
+      # existe (primer arranque, usa config/map-gen-settings.json y
+      # map-settings.json). Después, LOAD_LATEST_SAVE carga siempre el
+      # save más reciente (autosaves incluidos) — redeploy no pierde mundo.
       - LOAD_LATEST_SAVE=true
-      - GENERATE_NEW_SAVE=false
-      - SAVE_NAME=mundo-amigos
+      - GENERATE_NEW_SAVE=true
+      - SAVE_NAME=churros
     volumes:
       # Datos persistentes (saves, mods, logs) en el host.
       - /opt/factorio:/factorio
