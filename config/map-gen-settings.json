@@ -1,0 +1,32 @@
+{
+  "_comment": "Generación del mapa. Solo se usa al CREAR el save (primer arranque). Cambiarlo después no afecta al mundo ya generado. frequency/size/richness: 1 = normal, 2 = doble, 0.5 = mitad, 0 = desactivado.",
+
+  "terrain_segmentation": 1,
+  "water": 1,
+  "width": 0,
+  "height": 0,
+  "starting_area": 1.5,
+  "peaceful_mode": false,
+
+  "autoplace_controls": {
+    "coal":        { "frequency": 1, "size": 2, "richness": 2 },
+    "copper-ore":  { "frequency": 1, "size": 2, "richness": 2 },
+    "iron-ore":    { "frequency": 1, "size": 2, "richness": 2 },
+    "stone":       { "frequency": 1, "size": 2, "richness": 2 },
+    "crude-oil":   { "frequency": 1, "size": 2, "richness": 2 },
+    "uranium-ore": { "frequency": 1, "size": 1, "richness": 1 },
+    "trees":       { "frequency": 1, "size": 1, "richness": 1 },
+    "enemy-base":  { "frequency": 0.7, "size": 0.7, "richness": 0.7 }
+  },
+
+  "cliff_settings": {
+    "name": "cliff",
+    "cliff_elevation_0": 10,
+    "cliff_elevation_interval": 40,
+    "richness": 0.5
+  },
+
+  "property_expression_names": {},
+  "starting_points": [ { "x": 0, "y": 0 } ],
+  "seed": null
+}

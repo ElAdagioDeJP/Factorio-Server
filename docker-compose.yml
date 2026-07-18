@@ -1,0 +1,47 @@
+services:
+  factorio:
+    # Versión estable pineada. Para actualizar: cambiar el tag y redeploy.
+    # NO usar "latest" (apunta a experimental 2.1.x).
+    image: factoriotools/factorio:2.0.77
+    restart: unless-stopped
+    ports:
+      # Puerto del juego: UDP directo al host, NO pasa por Traefik.
+      - "34197:34197/udp"
+      # RCON solo accesible desde el propio VPS (localhost).
+      # Admin remoto: ssh -L 27015:localhost:27015 usuario@vps
+      - "127.0.0.1:27015:27015"
+    environment:
+      # Space Age (mods space-age, quality, elevated-rails).
+      # Si algún cliente no tiene los mods del DLC y no puede entrar,
+      # cambiar a "false" y regenerar el save (borrar saves/ o cambiar SAVE_NAME).
+      - DLC_SPACE_AGE=true
+      # El mundo se genera UNA vez desde config/map-exchange-string.txt
+      # (paso one-off en el README) — por eso GENERATE_NEW_SAVE=false:
+      # si falta el save, el contenedor falla en vez de generar un mapa
+      # equivocado en silencio.
+      - LOAD_LATEST_SAVE=true
+      - GENERATE_NEW_SAVE=false
+      - SAVE_NAME=mundo-amigos
+    volumes:
+      # Datos persistentes (saves, mods, logs) en el host.
+      - /opt/factorio:/factorio
+      # Config versionada en este repo, montada por encima.
+      # Editar aquí -> redeploy en Dokploy -> aplicado. Saves intactos.
+      - ./config/server-settings.json:/factorio/config/server-settings.json:ro
+      - ./config/server-adminlist.json:/factorio/config/server-adminlist.json:ro
+      - ./config/map-gen-settings.json:/factorio/config/map-gen-settings.json:ro
+      - ./config/map-settings.json:/factorio/config/map-settings.json:ro
+    networks:
+      - dokploy-network
+    deploy:
+      resources:
+        limits:
+          # Deja ~1 vCPU y ~3.5 GB para n8n/Postgres/Chatwoot/Traefik.
+          cpus: "3.0"
+          memory: 4G
+        reservations:
+          memory: 1G
+
+networks:
+  dokploy-network:
+    external: true
