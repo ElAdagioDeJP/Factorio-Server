@@ -27,10 +27,12 @@ services:
       - /opt/factorio:/factorio
       # Config versionada en este repo, montada por encima.
       # Editar aquí -> redeploy en Dokploy -> aplicado. Saves intactos.
-      - ./config/server-settings.json:/factorio/config/server-settings.json:ro
-      - ./config/server-adminlist.json:/factorio/config/server-adminlist.json:ro
-      - ./config/map-gen-settings.json:/factorio/config/map-gen-settings.json:ro
-      - ./config/map-settings.json:/factorio/config/map-settings.json:ro
+      # Sin :ro — el entrypoint hace chown sobre /factorio y con
+      # read-only aborta (script corre con set -e).
+      - ./config/server-settings.json:/factorio/config/server-settings.json
+      - ./config/server-adminlist.json:/factorio/config/server-adminlist.json
+      - ./config/map-gen-settings.json:/factorio/config/map-gen-settings.json
+      - ./config/map-settings.json:/factorio/config/map-settings.json
     networks:
       - dokploy-network
     deploy:
